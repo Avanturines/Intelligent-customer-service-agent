@@ -1,0 +1,10 @@
+flask>=2.0.0
+fastapi>=0.100.0
+uvicorn>=0.20.0
+requests>=2.28.0
+numpy>=1.21.0
+faiss-cpu>=1.7.4
+pypdf>=3.0.0
+tqdm>=4.64.0
+urllib3>=1.26.0
+

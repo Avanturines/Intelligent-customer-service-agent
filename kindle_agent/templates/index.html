@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kindle Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+SC:wght@400;500;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-page: #f5f2e9;
+            --bg-page-gradient: radial-gradient(circle at top, #fdfaf3 0, #f5f2e9 45%, #f0ebe1 100%);
+            --bg-card: #ffffff;
+            --bg-card-soft: #fbf8f1;
+            --bg-input: #fbf7ef;
+            --accent-orange: #ff9900;
+            --accent-orange-soft: rgba(255, 153, 0, 0.15);
+            --accent-blue: #2563eb;
+            --text-main: #1f2933;
+            --text-sub: #6b7280;
+            --text-fade: #9ca3af;
+            --border-soft: #e5ded0;
+            --border-strong: #d4c7b4;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page-gradient);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 14px 28px 10px 28px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            background: rgba(253, 250, 243, 0.96);
+            backdrop-filter: blur(12px);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .brand-block {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .brand-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: var(--accent-orange);
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .brand-subtitle {
+            font-size: 0.84rem;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .brand-subtitle span.tag {
+            padding: 2px 6px;
+            border-radius: 999px;
+            border: 1px solid rgba(0,0,0,0.06);
+            background: #fff;
+            font-size: 0.75rem;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-icon:hover {
+            background: #fff;
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #22c55e;
+        }
+
+        .pill {
+            padding: 4px 9px;
+            border-radius: 999px;
+            border: 1px solid rgba(0,0,0,0.06);
+            background: #fff;
+            font-size: 0.78rem;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 18px;
+            padding: 16px 28px 20px 28px;
+        }
+
+        .left-panel {
+            flex: 1.3;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .panel-label {
+            font-size: 0.78rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-fade);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 20px; /* 固定高度，保证左右 label 对齐 */
+        }
+
+        .quick-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .quick-question-btn {
+            background: #fff;
+            border: 1px solid var(--border-soft);
+            border-radius: 16px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .quick-question-btn:hover {
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+            background: var(--accent-orange-soft);
+        }
+
+        .input-wrapper {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border-soft);
+            color: var(--text-main);
+            padding: 13px 16px;
+            padding-right: 52px;
+            border-radius: 999px;
+            font-family: 'Noto Sans SC', 'Inter', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.9);
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-orange);
+            background: #fffdf7;
+            box-shadow: 0 0 0 1px var(--accent-orange-soft), 0 0 18px var(--accent-orange-soft);
+        }
+
+        input::placeholder {
+            color: #b0a79a;
+        }
+
+        .send-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #b0a79a;
+            cursor: pointer;
+            transition: color 0.15s ease, transform 0.15s ease, opacity 0.2s ease;
+            font-size: 1.1rem;
+            user-select: none;
+        }
+
+        .send-icon:hover {
+            color: var(--accent-orange);
+            transform: translateY(-50%) translateX(1px);
+        }
+
+        .send-icon.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: translateY(-50%);
+        }
+
+        .input-hint {
+            margin-top: 4px;
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-hint kbd {
+            background: #fff;
+            border-radius: 4px;
+            padding: 1px 6px;
+            border: 1px solid rgba(0,0,0,0.08);
+            font-size: 0.7rem;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        #chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        .msg-card {
+            background: var(--bg-card);
+            border-radius: 18px;
+            padding: 12px 16px;
+            border: 1px solid rgba(0,0,0,0.04);
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+            animation: fadeIn 0.22s ease-out;
+            position: relative;
+        }
+
+        .msg-card.user-msg {
+            border-left: 3px solid var(--accent-orange);
+        }
+
+        .msg-card.bot-msg {
+            border-left: 3px solid #4b5563;
+        }
+
+        .msg-card:hover .msg-actions {
+            opacity: 1;
+        }
+
+        .msg-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .msg-header .sender-label {
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #fdf7ec;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .msg-header .msg-time {
+            margin-left: auto;
+            color: var(--text-fade);
+            font-size: 0.72rem;
+        }
+
+        .msg-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .msg-action-btn {
+            background: rgba(255,255,255,0.9);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 4px;
+            padding: 4px 6px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            color: var(--text-sub);
+            transition: all 0.15s ease;
+        }
+
+        .msg-action-btn:hover {
+            background: #fff;
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+        }
+
+        .msg-content {
+            line-height: 1.7;
+            font-size: 0.96rem;
+            font-family: 'Merriweather', 'Noto Sans SC', serif;
+            color: #252525;
+        }
+
+        .msg-content p {
+            margin: 0 0 8px 0;
+        }
+        .msg-content p:last-child {
+            margin-bottom: 0;
+        }
+        .msg-content ul {
+            margin: 4px 0 8px 1.2em;
+            padding-left: 0.6em;
+        }
+        .msg-content li {
+            margin-bottom: 4px;
+        }
+        .msg-content strong {
+            color: #111827;
+        }
+        .msg-content code {
+            font-family: "JetBrains Mono", monospace;
+            background: #f3ece0;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .msg-content pre {
+            background: #f3ece0;
+            border-radius: 8px;
+            padding: 8px 10px;
+            overflow-x: auto;
+            font-size: 0.8rem;
+            border: 1px solid #e0d5c2;
+        }
+
+        /* 右侧面板 CSS 重点修改区域 */
+        .right-panel {
+            flex: 0.9;
+            background: rgba(255,255,255,0.7);
+            border-left: 1px solid rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            padding-left: 18px; /* 稍微增加左间距 */
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .evidence-header {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 12px;
+            /* 重点：确保标题行垂直居中对齐 */
+            display: flex;
+            align-items: center; 
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .evidence-header-badge {
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(0,0,0,0.06);
+            font-size: 0.7rem;
+            color: var(--text-sub);
+            background: #fff;
+            /* 稍微调整位置以视觉对齐 */
+            margin-left: auto; 
+        }
+
+        .evidence-count {
+            font-size: 0.8rem;
+            color: var(--text-fade);
+            margin-left: 2px;
+        }
+
+        .evidence-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .evidence-card {
+            background: var(--bg-card-soft);
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-family: 'Merriweather', 'Noto Sans SC', serif;
+            font-size: 0.8rem;
+            color: #4b5563;
+            position: relative;
+            transition: box-shadow 0.18s ease, transform 0.12s ease, border-color 0.18s ease;
+            cursor: pointer;
+        }
+
+        .evidence-card:hover {
+            box-shadow: 0 10px 22px rgba(15,23,42,0.08);
+            transform: translateY(-1px);
+            border-color: var(--accent-orange-soft);
+        }
+
+        .evidence-card.expanded .evidence-text {
+            max-height: none;
+        }
+
+        .evidence-card.expanded .expand-toggle {
+            display: none;
+        }
+
+        .evidence-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.72rem;
+            color: var(--text-sub);
+            text-transform: uppercase;
+        }
+
+        .evidence-top span:first-child {
+            letter-spacing: 0.08em;
+        }
+
+        .evidence-page {
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: var(--accent-orange-soft);
+            color: #92400e;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .evidence-text {
+            line-height: 1.6;
+            max-height: 7.5em;
+            overflow: hidden;
+            position: relative;
+            white-space: pre-wrap;
+            transition: max-height 0.3s ease;
+        }
+
+        .expand-toggle {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, var(--bg-card-soft), transparent);
+            padding-top: 20px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--accent-orange);
+            cursor: pointer;
+        }
+
+        .typing {
+            color: var(--text-sub);
+            font-size: 0.8rem;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .typing span.dot {
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            border-radius: 999px;
+            background: var(--accent-orange);
+            margin-left: 4px;
+            animation: dotPulse 1.4s infinite ease-in-out both;
+        }
+        .typing span.dot:nth-child(2) { animation-delay: -0.2s; }
+        .typing span.dot:nth-child(3) { animation-delay: -0.4s; }
+
+        @keyframes dotPulse {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Empty State 重点修改：让它居中显示在面板中间 */
+        .empty-state {
+            margin: auto; /* 垂直居中 */
+            text-align: center;
+            color: var(--text-fade);
+            font-size: 0.78rem;
+            line-height: 1.6;
+            font-family: 'Merriweather', 'Noto Sans SC', serif;
+            padding: 20px;
+            max-width: 90%;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1f2933;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            display: none;
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1c2ab; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #b8a48a; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 900px) {
+            .main-container {
+                flex-direction: column;
+                padding: 12px 12px 16px 12px;
+            }
+            .header {
+                padding: 10px 14px;
+            }
+            .right-panel {
+                padding-left: 0;
+                border-left: none;
+                border-top: 1px solid rgba(0,0,0,0.06);
+                margin-top: 6px;
+                padding-top: 10px;
+                background: rgba(255,255,255,0.9);
+            }
+            .quick-questions {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .brand-subtitle { display: none; }
+            .panel-label { display: none; }
+            .evidence-header-badge { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-left">
+        <svg 
+            style="width: 42px; height: 42px; color: #ff9900; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 8px; box-shadow: 0 2px 6px rgba(255, 153, 0, 0.1); flex-shrink: 0;"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 5L19.5 6.5L21 7L19.5 7.5L19 9L18.5 7.5L17 7L18.5 6.5L19 5Z" fill="#ff9900" stroke="none" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 2L21.3 3L22.3 3.3L21.3 3.6L21 4.6L20.7 3.6L19.7 3.3L20.7 3L21 2Z" fill="#ff9900" stroke="none" opacity="0.6" />
+        </svg>
+
+        <div class="brand-block">
+            <h1 class="brand-title">KINDLE ASSISTANT</h1>
+            <div class="brand-subtitle">
+                <span>Kindle User Guide · Intelligent Q&A</span>
+                <span class="tag">RAG · Local Knowledge Base</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-right">
+        <div class="header-actions">
+            <button class="btn-icon" id="clear-chat-btn" title="Clear Chat">
+                🗑️ Clear
+            </button>
+        </div>
+        <div class="status-dot"></div>
+        <span>Online</span>
+        <span class="pill">Mode: Manual Q&A</span>
+    </div>
+</header>
+
+<div class="main-container">
+    
+    <div class="left-panel">
+        <div class="panel-label">
+            <span>Query Console</span>
+            <span style="font-size: 0.7rem; color: var(--text-fade);">Quick Questions:</span>
+        </div>
+
+        <div class="quick-questions" id="quick-questions">
+            <button class="quick-question-btn">How to send ebooks to Kindle?</button>
+            <button class="quick-question-btn">How to highlight and take notes?</button>
+            <button class="quick-question-btn">How to protect the battery?</button>
+            <button class="quick-question-btn">How to connect to Wi-Fi?</button>
+        </div>
+
+        <div class="input-wrapper">
+            <input type="text" id="user-input" placeholder="Ask your Kindle usage questions..." autocomplete="off">
+            <div class="send-icon" id="send-icon">➤</div>
+        </div>
+        <div class="input-hint">
+            <span>Press <kbd>Enter</kbd> to send | <kbd>Shift+Enter</kbd> for new line</span>
+        </div>
+
+        <div id="chat-history">
+            <div class="msg-card bot-msg">
+                <div class="msg-header">
+                    <span>📖</span>
+                    <span class="sender-label">Kindle Assistant</span>
+                    <span class="msg-time" id="initial-time"></span>
+                </div>
+                <div class="msg-content">
+                    Welcome to <strong>Kindle RAG Knowledge Assistant</strong>.<br>
+                    I've loaded the entire Kindle User Guide. You can ask questions like:
+                    <ul>
+                        <li>"How to send ebooks to my Kindle?"</li>
+                        <li>"How to highlight, take notes, and view them on my computer?"</li>
+                        <li>"How to protect the battery and extend battery life?"</li>
+                    </ul>
+                    I'll provide answers based on the original text from the manual and show evidence snippets on the right.
+                </div>
+            </div>
+        </div>
+        
+        <div class="typing" id="loading-text">
+            Reading manual<span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div class="panel-label">Evidence View</div>
+
+        <div class="evidence-header">
+            <span style="font-size: 1.1em; line-height: 1;">🔍</span>
+            <span>Retrieved Evidence</span>
+            <span class="evidence-count" id="evidence-count">(0)</span>
+            <span class="evidence-header-badge">From PDF Original</span>
+        </div>
+        
+        <div class="evidence-list" id="evidence-container">
+            <div class="empty-state">
+                // Original text snippets retrieved from the Kindle User Guide will be displayed here.<br>
+                // After asking a question, I'll show the corresponding page numbers and content.
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const chatHistory = document.getElementById('chat-history');
+    const evidenceContainer = document.getElementById('evidence-container');
+    const userInput = document.getElementById('user-input');
+    const loadingText = document.getElementById('loading-text');
+    const evidenceCount = document.getElementById('evidence-count');
+    const sendIcon = document.getElementById('send-icon');
+    const initialTime = document.getElementById('initial-time');
+    const clearChatBtn = document.getElementById('clear-chat-btn');
+    const quickQuestions = document.getElementById('quick-questions');
+    const toast = document.getElementById('toast');
+
+    // Initial time
+    initialTime.textContent = formatTime();
+
+    // Markdown configuration
+    if (window.marked) {
+        marked.setOptions({
+            breaks: true
+        });
+    }
+
+    // Quick question buttons
+    quickQuestions.addEventListener('click', (e) => {
+        if (e.target.classList.contains('quick-question-btn')) {
+            userInput.value = e.target.textContent;
+            userInput.focus();
+            sendMessage();
+        }
+    });
+
+    // Clear chat
+    clearChatBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear all chat history?')) {
+            const welcomeMsg = chatHistory.querySelector('.bot-msg');
+            chatHistory.innerHTML = '';
+            if (welcomeMsg) {
+                chatHistory.appendChild(welcomeMsg);
+            }
+            evidenceContainer.innerHTML = `
+                <div class="empty-state">
+                    // Original text snippets retrieved from the Kindle User Guide will be displayed here.<br>
+                    // After asking a question, I'll show the corresponding page numbers and content.
+                </div>
+            `;
+            evidenceCount.innerText = '(0)';
+            showToast('Chat cleared');
+        }
+    });
+
+    // Press Enter to send, Shift+Enter for new line
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // Click to send
+    sendIcon.addEventListener('click', () => {
+        if (!sendIcon.classList.contains('disabled')) {
+            sendMessage();
+        }
+    });
+
+    function formatTime() {
+        const now = new Date();
+        const h = now.getHours().toString().padStart(2, '0');
+        const m = now.getMinutes().toString().padStart(2, '0');
+        return `${h}:${m}`;
+    }
+
+    function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2000);
+    }
+
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        // User message
+        const userMsgId = addMessage('USER', text, 'user-msg');
+        userInput.value = '';
+        userInput.disabled = true;
+        sendIcon.classList.add('disabled');
+        
+        loadingText.style.display = 'inline-block';
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: text })
+            });
+
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+
+            if (data.error) {
+                addMessage('System', data.error, 'bot-msg', '⚠️');
+            } else {
+                addMessage('Kindle Assistant', data.answer || '', 'bot-msg', '📖', text);
+                updateEvidencePanel(data.sources || []);
+            }
+
+        } catch (e) {
+            console.error(e);
+            addMessage('System', 'Connection failed. Please check if the backend service is running. You can click the "Retry" button on the right side of the message to resend.', 'bot-msg', '⚠️');
+        } finally {
+            loadingText.style.display = 'none';
+            userInput.disabled = false;
+            sendIcon.classList.remove('disabled');
+            userInput.focus();
+        }
+    }
+
+    function addMessage(sender, text, className, iconOverride, originalQuery = null) {
+        const div = document.createElement('div');
+        div.className = `msg-card ${className}`;
+        const msgId = Date.now();
+        
+        let icon = iconOverride;
+        if (!icon) {
+            if (sender === 'USER') icon = '👤';
+            else icon = '📖';
+        }
+
+        const safeText = text || '';
+        const html = window.marked ? marked.parse(safeText) : safeText;
+
+        const actionsHtml = sender === 'USER' ? '' : `
+            <div class="msg-actions">
+                <button class="msg-action-btn" onclick="copyMessage(this)" title="复制">📋</button>
+            </div>
+        `;
+
+        div.innerHTML = `
+            <div class="msg-header">
+                <span>${icon}</span>
+                <span class="sender-label">${sender}</span>
+                <span class="msg-time">${formatTime()}</span>
+            </div>
+            <div class="msg-content">${html}</div>
+            ${actionsHtml}
+        `;
+        
+        chatHistory.appendChild(div);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+        return msgId;
+    }
+
+    function copyMessage(btn) {
+        const msgCard = btn.closest('.msg-card');
+        const content = msgCard.querySelector('.msg-content');
+        const text = content.innerText || content.textContent;
+        
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Copied to clipboard');
+        }).catch(() => {
+            // Fallback
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('Copied to clipboard');
+        });
+    }
+
+    function updateEvidencePanel(sources) {
+        evidenceContainer.innerHTML = '';
+        
+        if (!sources || !Array.isArray(sources) || sources.length === 0) {
+            evidenceCount.innerText = '(0)';
+            evidenceContainer.innerHTML = `
+                <div class="empty-state">
+                    // No relevant evidence retrieved.<br>
+                    // Try different keywords or rephrase your question.
+                </div>
+            `;
+            return;
+        }
+
+        evidenceCount.innerText = `(${sources.length})`;
+
+        sources.forEach((s, index) => {
+            const card = document.createElement('div');
+            card.className = 'evidence-card';
+            
+            const page = s.page ?? '-';
+            const rawText = typeof s.text === 'string' ? s.text : '';
+            const isLong = rawText.length > 380;
+            const snippet = isLong ? rawText.substring(0, 380) + '…' : rawText;
+
+            card.innerHTML = `
+                <div class="evidence-top">
+                    <span>Evidence #${index + 1}</span>
+                    <span class="evidence-page">P.${page}</span>
+                </div>
+                <div class="evidence-text">${rawText}</div>
+                ${isLong ? '<div class="expand-toggle" onclick="this.parentElement.classList.toggle(\'expanded\')">Click to expand</div>' : ''}
+            `;
+            evidenceContainer.appendChild(card);
+        });
+    }
+
+    // Global function for HTML calls
+    window.copyMessage = copyMessage;
+</script>
+
+</body>
+</html>
